@@ -11,3 +11,27 @@ spring:
     name: edge-service
   lifecycle:
     timeout-per-shutdown-phase: 15s
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 2000 # Time limit for a connection to downstream service to be established (ms)
+        response-timeout: 5s
+        # By default the Netty HTTP client is configured with elastic connection pool, that increases
+        # the number of concurrent connections as the workload increases. We can configure it manually
+        pool:
+          # Type of connection pool: elastic, fixed, disabled
+          type: elastic
+          # Idle time after which the communication channel will be closed
+          max-idle-time: 15s
+          # Time after which the communication channel will be closed
+          max-life-time: 60s
+      routes:
+        - id: catalog-route
+          # The URI value comes from an env variable, or else from the default
+          uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
+          predicates:
+            - Path=/books/**
+        - id: order-route
+          uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
+          predicates:
+            - Path=/orders/**
