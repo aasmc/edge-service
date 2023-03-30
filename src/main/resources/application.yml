@@ -31,10 +31,19 @@ spring:
           uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
           predicates:
             - Path=/books/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: catalogCircuitBreaker
+                fallbackUri: forward:/catalog-fallback
         - id: order-route
           uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
           predicates:
             - Path=/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
       default-filters:
         - name: Retry
           args:
@@ -48,3 +57,18 @@ spring:
               maxBackOff: 500ms
               factor: 2
               basedOnPreviousValue: false
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # When at least 50% of the calls in the window have produced an error, the circuit
+        # will trip to open state
+        sliding-window-size: 20
+        permitted-number-of-calls-in-half-open-state: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15000 # Wait time before moving from open to half-open state (ms)
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
