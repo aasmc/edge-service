@@ -11,12 +11,24 @@ spring:
     name: edge-service
   lifecycle:
     timeout-per-shutdown-phase: 15s
+  config:
+    import: "optional:configserver:"
   session:
     store-type: redis
     timeout: 10m
     redis:
       namespace: polar:edge
   cloud:
+    config:
+      uri: http://localhost:8888
+      request-connect-timeout: 10000 # 10s
+      request-read-timeout: 10000 # 10s
+      fail-fast: false # In production, set to true
+      retry:
+        max-attempts: 6
+        initial-interval: 1000
+        max-interval: 2000
+        multiplier: 1.1
     gateway:
       httpclient:
         connect-timeout: 2000 # Time limit for a connection to downstream service to be established (ms)
