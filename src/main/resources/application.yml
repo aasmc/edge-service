@@ -45,6 +45,15 @@ spring:
               args:
                 name: orderCircuitBreaker
       default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter:
+              # Number of tokens dripped in the bucket each second
+              replenishRate: 10
+              # Allows request bursts of up to 20 requests
+              burstCapacity: 20
+              # How many tokens a request costs
+              requestedTokens: 1
         - name: Retry
           args:
             retries: 3
