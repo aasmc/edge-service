@@ -19,3 +19,15 @@ After building the application, you can also run it from the Java CLI:
 ```bash
 java -jar build/libs/edge-service-0.0.1-SNAPSHOT.jar
 ```
+
+Other useful commands:
+
+```bash
+minikube ip --profile polar
+```
+
+Allows traffic to cluster on Mac 
+
+```bash
+minikube tunnel --profile polar
+```
