@@ -7,6 +7,17 @@ server:
   shutdown: graceful
 
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: edge-service
+            client-secret: polar-keycloak-secret
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/PolarBookshop
   application:
     name: edge-service
   lifecycle:
@@ -43,6 +54,10 @@ spring:
           # Time after which the communication channel will be closed
           max-life-time: 60s
       routes:
+        - id: spa-route
+          uri: ${SPA_URL:http://localhost:9004}
+          predicates:
+            - Path=/,/*.css,/*.js,/favicon.ico
         - id: catalog-route
           # The URI value comes from an env variable, or else from the default
           uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books

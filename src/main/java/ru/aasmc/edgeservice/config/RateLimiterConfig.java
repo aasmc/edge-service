@@ -5,12 +5,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
+import java.security.Principal;
+
 @Configuration
 public class RateLimiterConfig {
     @Bean
     public KeyResolver keyResolver() {
-        // until add authentication, rate limiting is applied
-        // to requests using a constant key
-        return exchange -> Mono.just("anonymous");
+        // apply rate limits to each user independently
+        return exchange -> exchange.getPrincipal()
+                .map(Principal::getName)
+                .defaultIfEmpty("anonymous");
     }
 }
