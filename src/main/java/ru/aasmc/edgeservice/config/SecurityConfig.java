@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
@@ -51,10 +51,10 @@ public class SecurityConfig {
      */
     @Bean
     WebFilter csrfWebFilter() {
+        // Required because of https://github.com/spring-projects/spring-security/issues/5766
         return (exchange, chain) -> {
             exchange.getResponse().beforeCommit(() -> Mono.defer(() -> {
-                Mono<CsrfToken> csrfToken =
-                        exchange.getAttribute(CsrfToken.class.getName());
+                Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
                 return csrfToken != null ? csrfToken.then() : Mono.empty();
             }));
             return chain.filter(exchange);
