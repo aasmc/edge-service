@@ -28,7 +28,7 @@ public class SecurityConfig {
      * used by Spring Security for authentication/authorization purposes.
      */
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(
+    SecurityWebFilterChain springSecurityFilterChain(
             ServerHttpSecurity http,
             ReactiveClientRegistrationRepository clientRegistrationRepository) {
         return http
@@ -40,8 +40,8 @@ public class SecurityConfig {
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .oauth2Login(Customizer.withDefaults())
-                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()))
+                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)))
                 .build();
     }
 
@@ -50,25 +50,19 @@ public class SecurityConfig {
      * and ensuring its value is extracted correctly.
      */
     @Bean
-    public WebFilter csrfWebFilter() {
-        // Required because of https://github.com/spring-projects/spring-security/issues/5766
+    WebFilter csrfWebFilter() {
         return (exchange, chain) -> {
             exchange.getResponse().beforeCommit(() -> Mono.defer(() -> {
-                Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
+                Mono<CsrfToken> csrfToken =
+                        exchange.getAttribute(CsrfToken.class.getName());
                 return csrfToken != null ? csrfToken.then() : Mono.empty();
             }));
             return chain.filter(exchange);
         };
     }
 
-    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(
-            ReactiveClientRegistrationRepository clientRegistrationRepository
-    ) {
-        var oidcLogoutSuccessHandler =
-                new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
-        // after logging out from the OIDC Provider, Keycloak will redirect the user to
-        // the application base URL computed dynamically from Spring (locally, it's
-        // http://localhost:9000)
+    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        var oidcLogoutSuccessHandler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
         oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
         return oidcLogoutSuccessHandler;
     }
