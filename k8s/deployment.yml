@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: edge-service
-          image: edge-service
+          image: ghcr.io/aasmc/edge-service
           imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
