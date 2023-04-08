@@ -19,7 +19,8 @@ public class UserController {
                 oidcUser.getPreferredUsername(),
                 oidcUser.getGivenName(),
                 oidcUser.getFamilyName(),
-                List.of("employee", "customer")
+                // Get the 'roles' claim and extracts it as a list of strings
+                oidcUser.getClaimAsStringList("roles")
         );
         return Mono.just(user);
     }

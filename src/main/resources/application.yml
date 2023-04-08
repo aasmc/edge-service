@@ -14,7 +14,7 @@ spring:
           keycloak:
             client-id: edge-service
             client-secret: polar-keycloak-secret
-            scope: openid
+            scope: openid,roles
         provider:
           keycloak:
             issuer-uri: http://localhost:8080/realms/PolarBookshop
@@ -79,6 +79,10 @@ spring:
       default-filters:
         # Ensures the session data is saved before forwarding a request downstream
         - SaveSession
+        # Enables the propagation of the Access Token when calling downstream services
+        # The token is in the form of HTTP Header:
+        # Authorization: Bearer <access token>
+        - TokenRelay
         - name: RequestRateLimiter
           args:
             redis-rate-limiter:
