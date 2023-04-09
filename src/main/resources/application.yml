@@ -144,3 +144,6 @@ management:
         enabled: true
       show-details: always
       show-components: always
+      group:
+        readiness:
+          include: readinessState,redis
