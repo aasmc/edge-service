@@ -133,3 +133,14 @@ logging:
     circuitbreaker: info
   pattern:
     level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      show-components: always
