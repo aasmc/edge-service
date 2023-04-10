@@ -29,6 +29,7 @@ public class SecurityConfig {
      * for storing the information about the clients registered with Keycloak, and it's
      * used by Spring Security for authentication/authorization purposes.
      */
+    @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clientRegistrationRepository) {
         return http
                 .authorizeExchange(exchange -> exchange
