@@ -9,11 +9,12 @@ import java.security.Principal;
 
 @Configuration
 public class RateLimiterConfig {
+
     @Bean
-    public KeyResolver keyResolver() {
-        // apply rate limits to each user independently
+    KeyResolver keyResolver() {
         return exchange -> exchange.getPrincipal()
                 .map(Principal::getName)
                 .defaultIfEmpty("anonymous");
     }
+
 }

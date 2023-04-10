@@ -19,12 +19,11 @@ public class UserController {
 
     @GetMapping("user")
     public Mono<User> getUser(@AuthenticationPrincipal OidcUser oidcUser) {
-        log.info("Fetching information about the currently authenticated user.");
+        log.info("Fetching information about the currently authenticated user");
         var user = new User(
                 oidcUser.getPreferredUsername(),
                 oidcUser.getGivenName(),
                 oidcUser.getFamilyName(),
-                // Get the 'roles' claim and extracts it as a list of strings
                 oidcUser.getClaimAsStringList("roles")
         );
         return Mono.just(user);

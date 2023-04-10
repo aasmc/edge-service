@@ -29,10 +29,7 @@ public class SecurityConfig {
      * for storing the information about the clients registered with Keycloak, and it's
      * used by Spring Security for authentication/authorization purposes.
      */
-    @Bean
-    SecurityWebFilterChain springSecurityFilterChain(
-            ServerHttpSecurity http,
-            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clientRegistrationRepository) {
         return http
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/actuator/**").permitAll()
@@ -43,8 +40,8 @@ public class SecurityConfig {
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .oauth2Login(Customizer.withDefaults())
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()))
                 .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)))
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()))
                 .build();
     }
 
