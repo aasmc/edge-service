@@ -2,64 +2,61 @@ server:
   port: 9000
   netty:
     connection-timeout: 2s
-    # how long to wait before closing a TCP connection if no data is transferred
     idle-timeout: 15s
   shutdown: graceful
 
 spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            client-id: edge-service
-            client-secret: polar-keycloak-secret
-            scope: openid,roles
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:8080/realms/PolarBookshop
   application:
     name: edge-service
   lifecycle:
     timeout-per-shutdown-phase: 15s
   config:
     import: "optional:configserver:"
-  session:
-    store-type: redis
-    timeout: 10m
-    redis:
-      namespace: polar:edge
   cloud:
     config:
       uri: http://localhost:8888
-      request-connect-timeout: 10000 # 10s
-      request-read-timeout: 10000 # 10s
+      request-connect-timeout: 5000 # 5s
+      request-read-timeout: 5000 # 5s
       fail-fast: false # In production, set to true
       retry:
         max-attempts: 6
-        initial-interval: 1000
-        max-interval: 2000
+        initial-interval: 1000 # 1s
+        max-interval: 2000 # 2s
         multiplier: 1.1
     gateway:
       httpclient:
-        connect-timeout: 2000 # Time limit for a connection to downstream service to be established (ms)
+        connect-timeout: 2000 # 2s
         response-timeout: 5s
-        # By default the Netty HTTP client is configured with elastic connection pool, that increases
-        # the number of concurrent connections as the workload increases. We can configure it manually
         pool:
-          # Type of connection pool: elastic, fixed, disabled
           type: elastic
-          # Idle time after which the communication channel will be closed
           max-idle-time: 15s
-          # Time after which the communication channel will be closed
           max-life-time: 60s
+      default-filters:
+        - SaveSession
+        - TokenRelay
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter:
+              replenishRate: 10
+              burstCapacity: 20
+              requestedTokens: 1
+        - name: Retry
+          args:
+            retries: 3
+            methods: GET
+            series: SERVER_ERROR
+            exceptions: java.io.IOException, java.util.concurrent.TimeoutException
+            backoff:
+              firstBackoff: 50ms
+              maxBackOff: 500ms
+              factor: 2
+              basedOnPreviousValue: false
       routes:
         - id: spa-route
           uri: ${SPA_URL:http://localhost:9004}
           predicates:
             - Path=/,/*.css,/*.js,/favicon.ico
         - id: catalog-route
-          # The URI value comes from an env variable, or else from the default
           uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
           predicates:
             - Path=/books/**
@@ -76,55 +73,40 @@ spring:
             - name: CircuitBreaker
               args:
                 name: orderCircuitBreaker
-      default-filters:
-        # Ensures the session data is saved before forwarding a request downstream
-        - SaveSession
-        # Enables the propagation of the Access Token when calling downstream services
-        # The token is in the form of HTTP Header:
-        # Authorization: Bearer <access token>
-        - TokenRelay
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter:
-              # Number of tokens dripped in the bucket each second
-              replenishRate: 10
-              # Allows request bursts of up to 20 requests
-              burstCapacity: 20
-              # How many tokens a request costs
-              requestedTokens: 1
-        - name: Retry
-          args:
-            retries: 3
-            methods: GET
-            series: SERVER_ERROR # Retry only when 5XX errors
-            exceptions: java.io.IOException, java.util.concurrent.TimeoutException
-            backoff:
-              # Retries with a delay computed as "firstBackoff * (factor ^ n)"
-              firstBackoff: 50ms
-              maxBackOff: 500ms
-              factor: 2
-              basedOnPreviousValue: false
-
   redis:
     connect-timeout: 2s
     host: localhost
     port: 6379
     timeout: 1s
+  session:
+    store-type: redis
+    timeout: 10m
+    redis:
+      namespace: polar:edge
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: edge-service
+            client-secret: polar-keycloak-secret
+            scope: openid,roles
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/PolarBookshop
 
 resilience4j:
   circuitbreaker:
     configs:
       default:
-        # When at least 50% of the calls in the window have produced an error, the circuit
-        # will trip to open state
-        sliding-window-size: 20
-        permitted-number-of-calls-in-half-open-state: 5
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 15000 # Wait time before moving from open to half-open state (ms)
+        slidingWindowSize: 20
+        permittedNumberOfCallsInHalfOpenState: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 15000
   timelimiter:
     configs:
       default:
-        timeout-duration: 5s
+        timeoutDuration: 5s
 
 logging:
   group:
@@ -144,14 +126,13 @@ management:
         include: configprops, env, gateway, health, heapdump, info, loggers, mappings, prometheus
   endpoint:
     health:
-      probes:
-        enabled: true
       show-details: always
       show-components: always
+      probes:
+        enabled: true
       group:
         readiness:
           include: readinessState,redis
-
   info:
     env:
       enabled: true
