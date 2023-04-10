@@ -26,6 +26,8 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+	runtimeOnly 'io.github.resilience4j:resilience4j-micrometer'
+
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
